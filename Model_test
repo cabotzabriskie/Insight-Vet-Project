@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jan 28 09:18:51 2019
+
+@author: cabot
+"""
+
+import gensim
+import pandas as pd
+from sqlalchemy import create_engine
+from sqlalchemy_utils import database_exists, create_database
+import psycopg2
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+
+dbname = "Database"
+username = "username"
+host     = 'localhost'
+port     = '5432' 
+password = "password"
+
+
+#Import all reviews
+con = None
+con = psycopg2.connect(database = dbname, user = username, password = password, host =host, port = port)
+sql_query = """
+SELECT * FROM all_revs;
+"""
+data = pd.read_sql_query(sql_query,con)
+
+#tokenize, remove stop words the reviews
+from nltk.tokenize import RegexpTokenizer
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+stop_words = set(stopwords.words('english'))
+tokenizer = RegexpTokenizer(r'\w+')
+
+
+#Doc2Vec test
+
+tagged_data = [TaggedDocument(words=word_tokenize(_d.lower()), tags=[str(i)]) for i, _d in enumerate(data['review_text'])]
+
+modeld2v = Doc2Vec(vector_size=100,
+                        window=8,
+                        min_count=2,
+                        workers=4,
+                        dm = 1,
+                        epochs = 10)
+
+modeld2v.build_vocab(tagged_data)
+
+test_data = word_tokenize("Everyone here is so nice and friendly that I just can't help loving it".lower())
+v1 = modeld2v.infer_vector(test_data)
+
+similar_doc = modeld2v.docvecs.most_similar([v1], topn = 1)
+print(similar_doc)
+
+
+#word2vec test
+
+data["tokens"] = data["review_text"].apply(tokenizer.tokenize)
+
+data['tokens2'] = data['tokens'].apply(lambda x: ' '.join( [item for item in x if item not in stop_words]))
+
+data["tokens3"] = data["tokens2"].apply(tokenizer.tokenize)
+
+model = gensim.models.Word2Vec(
+        data['tokens3'],
+        size=150,
+        window=10,
+        min_count=2,
+        workers=10)
+
+model.train(data['tokens3'], total_examples=len(data['tokens3']), epochs=10)
+ 
+doc1 = "Everyone here is so nice and friendly that I just can't help loving it"
+doc1 = doc1.strip().lower().split()
+remove = ['th','rd','st','']
+doc1P = [token for token in doc1 if (token not in remove and token in model.wv.vocab)]
+
+doc2 = data.loc[37295,'tokens3']
+
+doc1PP = np.mean([model[token] for token in doc1P],axis=0)
+doc2PP = np.mean([model[token] for token in doc2],axis=0)
+
+cosine_similarity(doc1PP.reshape(1,-1), doc2PP.reshape(1,-1))
+
+model.wv.similarity(doc1PP, doc2PP)
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 22 09:05:51 2019
+
+@author: cabot
+"""
+from sqlalchemy import create_engine
+from sqlalchemy_utils import database_exists, create_database
+import psycopg2
+import keras
+import nltk
+import pandas as pd
+import numpy as np
+import re
+import codecs
+
+Ny = pd.read_csv("scraped-data/Morgantown%2C%20WV20190120-214136.csv")
+La = pd.read_csv("scraped-reviews/Los%20Angeles%2C%20CA20190127-194547.csv")
+Wich = pd.read_csv("scraped-reviews/Wichita%2c%20KS20190125-161451.csv")
+Chi = pd.read_csv("scraped-reviews/Chicago, IL20190127-151048.csv")
+Ny.columns = ['Ind', 'review_name', 'review_rating', 'review_date',
+       'review_text', 'biz_url', 'biz_rating', 'biz_name', 'biz_phone']
+La.columns = ['Ind', 'review_name', 'review_rating', 'review_date',
+       'review_text', 'biz_url', 'biz_rating', 'biz_name', 'biz_phone', 'mon',
+       'tues', 'wed', 'thurs', 'fri', 'sat', 'sun']
+Wich.columns = ['Ind', 'review_name', 'review_rating', 'review_date',
+       'review_text', 'biz_url', 'biz_rating', 'biz_name', 'biz_phone',
+       "biz_lat","biz_long",'mon',
+       'tues', 'wed', 'thurs', 'fri', 'sat', 'sun','biz_desc']
+Chi.columns = ['Ind', 'review_name', 'review_rating', 'review_date',
+       'review_text', 'biz_url', 'biz_rating', 'biz_name', 'biz_phone', 'mon',
+       'tues', 'wed', 'thurs', 'fri', 'sat', 'sun']
+
+dbname = "Database"
+username = "username"
+host     = 'localhost'
+port     = '5432' 
+password = "password"
+
+engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(username, password, host, port, dbname))
+print(engine.url)
+
+if not database_exists(engine.url):
+    create_database(engine.url)
+print(database_exists(engine.url))
+
+data.to_sql('raw_data_table', engine, if_exists = 'replace')
+La.to_sql('la_raw_data_table', engine, if_exists = 'replace')
+Wich.to_sql('wich_raw_data_table', engine, if_exists = 'replace')
+Chi.to_sql('chi_raw_data_table', engine, if_exists = 'replace')
+
+def standardize_text(df, text_field):
+   # df[text_field] = df[text_field].str.replace(r"http\S+", "")
+   # df[text_field] = df[text_field].str.replace(r"http", "")
+   # df[text_field] = df[text_field].str.replace(r"@\S+", "")
+    df[text_field] = df[text_field].str.replace(r"\'", " ")
+    df[text_field] = df[text_field].str.replace(r"\"", " ")
+    df[text_field] = df[text_field].str.replace(r"\n", " ")
+    df[text_field] = df[text_field].str.replace(r"\r", " ")
+    df[text_field] = df[text_field].str.replace(r"&", "and")
+    df[text_field] = df[text_field].str.replace(r"#", " ")
+    df[text_field] = df[text_field].str.replace(r"@", "at")
+    df[text_field] = df[text_field].str.replace(r"bc", "because")
+    df[text_field] = df[text_field].str.replace(r"b c", "because")
+    df[text_field] = df[text_field].str.replace(r"b/c", "because")
+    df[text_field] = df[text_field].str.lower()
+    df[text_field] = df[text_field].str.replace(r"dr\.", "dr")
+    df[text_field] = df[text_field].str.replace(r"d\.r\.", "dr")
+    return df
+
+
+
+
+Ny2 = standardize_text(Ny, "review_text")
+La2 = standardize_text(La, "review_text")
+Wich2 = standardize_text(Wich, "review_text")
+Chi2 = standardize_text(Chi, "review_text")
+
+Ny2.to_sql('ny_rmv_char_data_table', engine, if_exists = 'replace')
+La2.to_sql('la_rmv_char_data_table', engine, if_exists = 'replace')
+Wich2.to_sql('wich_rmv_char_data_table', engine, if_exists = 'replace')
+Chi2.to_sql('chi_rmv_char_data_table', engine, if_exists = 'replace')
+
+
+
+
+
+
+
+
+data2.to_csv("Intermed-data/NY_Regex_Clean.csv")
+
+s = data2["review_text"].str.split(".").apply(pd.Series, 1).stack()
+
+s.index = s.index.droplevel(-1)
+
+s.name = "review_text"
+
+del data2["review_text"]
+
+data3 = data2.join(s)
+
+data3.to_sql('ny_rev_split_data_table', engine, if_exists = 'replace')
+
+# positive dataset
+
+con = None
+con = psycopg2.connect(database = dbname, user = username, password = password, host =host, port = port)
+
+# query:
+sql_query = """
+SELECT * FROM ny_rmv_char_data_table WHERE review_rating >'3.5';
+"""
+NyPos = pd.read_sql_query(sql_query,con)
+
+sql_query = """
+SELECT * FROM la_rmv_char_data_table WHERE review_rating >'3.5';
+"""
+LaPos = pd.read_sql_query(sql_query,con)
+
+sql_query = """
+SELECT * FROM wich_rmv_char_data_table WHERE review_rating >'3.5';
+"""
+WichPos = pd.read_sql_query(sql_query,con)
+
+sql_query = """
+SELECT * FROM chi_rmv_char_data_table WHERE review_rating >'3.5';
+"""
+ChiPos = pd.read_sql_query(sql_query,con)
+
+
+dfPos = NyPos.append(LaPos, sort = True)
+dfPos = dfPos.append(WichPos, sort = True)
+dfPos = dfPos.append(ChiPos, sort = True)
+
+dfPos.to_sql('pos_revs', engine, if_exists = 'replace')
+
+
+dfPos.to_csv("Intermed-data/CombinedPosRev.csv")
+
+
+
+####Full combined
+
+# query:
+sql_query = """
+SELECT * FROM ny_rmv_char_data_table ;
+"""
+NyAll = pd.read_sql_query(sql_query,con)
+
+sql_query = """
+SELECT * FROM la_rmv_char_data_table;
+"""
+LaAll = pd.read_sql_query(sql_query,con)
+
+sql_query = """
+SELECT * FROM wich_rmv_char_data_table;
+"""
+WichAll = pd.read_sql_query(sql_query,con)
+
+sql_query = """
+SELECT * FROM chi_rmv_char_data_table;
+"""
+ChiAll = pd.read_sql_query(sql_query,con)
+
+dfAll = NyAll.append(LaAll, sort = True)
+dfAll = dfAll.append(WichAll, sort = True)
+dfAll = dfAll.append(ChiAll, sort = True)
+
+
+dfAll.to_sql('all_revs', engine, if_exists = 'replace')
+
+
+dfAll.to_csv("Intermed-data/CombinedAllRev.csv")
