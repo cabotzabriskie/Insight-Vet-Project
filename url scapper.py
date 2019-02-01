@@ -18,7 +18,6 @@ import re
 
 def setOptions():
     options = webdriver.ChromeOptions();
-    #options.add_argument('--/usr/lib/chromium-browser/chromedriver');
     options.add_argument('--disable-infobars');
     options.add_argument('--disable-dev-shm-usage');
     options.add_argument('--disable-extensions');
@@ -29,13 +28,10 @@ def setOptions():
     options.add_experimental_option("excludeSwitches", ["ignore-certificate-errors"]);
     return options
 
-#webdriver.Chrome('/usr/lib/chromium-browser/chromedriver')
 
 def startDriver():
     options = setOptions()
-    driver = webdriver.Chrome(chrome_options=options);  
-    #need implicit wait or else some pages timeout
-    #driver.implicitly_wait(10)
+    driver = webdriver.Chrome(chrome_options=options);
     wait = WebDriverWait(driver, 30);
     return driver, wait
 
@@ -46,12 +42,9 @@ def quitDriver(driver):
 def startThread(city):
     listOverall = []
     driver, wait = startDriver()
-   # city = city[0]
-    #url = 'https://www.yelp.com/search?find_desc=Child+Care+%26+Day+Care&find_loc='+city+'&start=0&sortby=review_count&cflt=childcare'
- #   url = 'https://www.yelp.com/search?find_desc=Veterinarians&find_loc=New%20York%2C%20NY&ns=1&sortby=review_count'
+
     url = 'https://www.yelp.com/search?find_desc=Veterinarians&find_loc='+city+'&sortby=review_count'
    
-    #url = 'https://www.yelp.com/search?find_desc=Veterinarians&find_loc=Morgantown%2C%20WV'
     driver.get(url)
     
     pageLoaded = wait.until(EC.visibility_of_element_located((By.ID,"wrap"))); 
@@ -61,19 +54,16 @@ def startThread(city):
      
     while(True):
         print('Searching: ',city,' on page: ',page)
-        #test = [link.get('href') for link in soup.findAll('a', class_="lemon--a__373c0__1_OnJ link__373c0__29943 link-color--blue-dark__373c0__1mhJo link-size--inherit__373c0__2JXk5")]
         for link in soup.findAll('a', class_="lemon--a__373c0__1_OnJ link__373c0__29943 link-color--blue-dark__373c0__1mhJo link-size--inherit__373c0__2JXk5"):
             biz_url = link.get('href')
             currentItem = [biz_url]
             currentPage.append(currentItem)
-        #currentItem = [test]#,biz_address,biz_phone,biz_rating,biz_ratingcount,biz_id,biz_url]
-        #currentPage.append(currentItem)
+
         try:
             nextURL = soup.find("a", class_="lemon--a__373c0__1_OnJ link__373c0__29943 next-link navigation-button__373c0__1D3Ug link-color--blue-dark__373c0__1mhJo link-size--default__373c0__1skgq")["href"]
             nextURL = "https://www.yelp.com" + nextURL
             
-            #nextURL = driver.findElement(By.linkText("next")).getAttribute("href");
-           # nextURL = driver.find_element_by_xpath("//a[@class='u-decoration-none next pagination-links_anchor']").get_attribute('href')
+
             driver.get(nextURL)
             page = page + 1
             pageLoaded = wait.until(EC.visibility_of_element_located((By.ID,"wrap"))); 
@@ -85,23 +75,7 @@ def startThread(city):
     return listOverall
 
 
-
-#still to do: seattle,phoenix,austin,riverside,B
-
-#listCities = ['Morgantown%2C%20WV']#,
-             # 'New+York,+NY',
-             # 'Chicago,+IL',
-             # 'Seattle,+WA',
-             # 'Houston,+TX',
-             # 'Phoenix,+AZ',
-             # 'San+Antonio,+TX',
-             # 'San+Diego,+CA',
-             # 'Austin,+TX',
-             # 'Philadelphia,+PA',
-             # 'Dallas,+TX',
-              #'San+Jose,+CA',]
 listCities = pd.read_csv("cities_list_noNY.csv", header=None).values.tolist()
-#columns = ['biz-name','biz-address','biz-phone','biz-rating','biz-ratingcount','biz-id','biz-url']
 columns = ['biz_url']
 import time
 
@@ -119,7 +93,5 @@ for i, city in enumerate(listCities):
     output3 = pd.DataFrame(output3)
     output3.columns=["biz_url"]
     now = time.strftime("%Y%m%d-%H%M%S")
-    
-    #output_csv = 'scraped-data/Daycare_businesses_v'+now+'.csv'
     output_csv = 'scraped-data/'+city+'_businesses_v'+now+'.csv'
     output3.to_csv(output_csv)

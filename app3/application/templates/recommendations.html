@@ -1,0 +1,91 @@
+<style>
+
+ .main {
+ background-color: rgba(255, 255, 255, 0.5);
+ margin-top: 100px;
+ padding-bottom: 50px;
+ }
+ .main h1 {
+ font-size: 3.5em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+ .main h2 {
+ font-size: 2em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+ .main h3 {
+ font-size: 2em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+ .main p {
+ font-size:1em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+
+</style>
+
+
+<title>Title</title>
+</head>
+<body>
+<div class="main">
+  <div style="text-align:center">
+  <br><br>
+  <div class="starter-template">
+
+<br><br>
+<h3>Your Tailored Vet List</h3>
+<h8>Click the link to get directions<h8>
+	  
+	  <div class="container">
+      <div class="starter-template">
+        <h4>Top Match</h4>
+        <p class="lead"><a href="{{link1}}">{{test}}</a> <br> Overall Rating: {{rating1}} <br> Your Match: {{youmat1}}</p>
+		  <a href="{{link1['link']}}" ></a>
+      </div>
+<h4>Your Number 2 Match</h4>
+     <div class="container">
+      <div class="starter-template">
+          <p class="lead"><a href="{{link2}}">{{test2}}</a> <br> Overall Rating: {{rating2}} <br> Your Match: {{youmat2}}</p>
+		  <a href="{{link2['link']}}" ></a>
+      </div>
+		 <h4>Your Number 3 Match</h4>
+	<div class="container">
+      <div class="starter-template">
+          <p class="lead"><a href="{{link3}}">{{test3}}</a> <br> Overall Rating: {{rating3}} <br> Your Match: {{youmat3}}</p>
+		  <a href="{{link3['link']}}" ></a>
+      </div>
+		<h4>Your Number 4 Match</h4>
+	<div class="container">
+      <div class="starter-template">
+          <p class="lead"><a href="{{link4}}">{{test4}}</a> <br> Overall Rating: {{rating4}} <br> Your Match: {{youmat4}}</p>
+		  <a href="{{link4['link']}}" ></a>
+      </div>
+		<h4>Your Number 5 Match</h4>
+	<div class="container">
+      <div class="starter-template">
+          <p class="lead"><a href="{{link5}}">{{test5}}</a> <br> Overall Rating: {{rating5}} <br> Your Match: {{youmat5}}</p>
+		  <a href="{{link5['link']}}" ></a>
+      </div>
+<!-- This is the important part!!
+The following code is basically what reads your data and runs your function from app.py
+Don't forget the {% for x in whatever %} if you use a for loop and end the for loop with {% endfor %} -->
+  {% for x in cos_sims %}
+  <div>
+
+    <!-- This gets the info from my florist_info database from app.py and outputs to the user -->
+    <a href="{{ florist_info[x]['link'] }}">
+    <img src="{{ florist_info[x]['img_src'] }}"></a>
+  </div>
+  {% endfor %}
+
+		<h3>Don't see something you like? Add to your review and see your matches improve!</h3>
+<img src="static/img/IMG_3838.JPG" style="width: 35%">
+
+
+</div></div></div>
+</body>

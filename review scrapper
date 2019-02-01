@@ -22,7 +22,6 @@ import time
 
 def setOptions():
     options = webdriver.ChromeOptions();
-    #options.add_argument('--/usr/lib/chromium-browser/chromedriver');
     options.add_argument('--disable-infobars');
     options.add_argument('--disable-dev-shm-usage');
     options.add_argument('--disable-extensions');
@@ -33,14 +32,14 @@ def setOptions():
     options.add_experimental_option("excludeSwitches", ["ignore-certificate-errors"]);
     return options
 
-#webdriver.Chrome('/usr/lib/chromium-browser/chromedriver')
+
 def getNextPage(driver, wait):
     nextURL = driver.find_element_by_xpath("//a[@class='u-decoration-none next pagination-links_anchor']").get_attribute('href')
     soup = finishLoadGrabSource(nextURL, driver, wait)
     return soup
 
 def finishLoadGrabSource(url, driver, wait):
-    #This overlay with class='throbber-overlay' disappears when Yelp loads
+   
     loadingCondition = EC.invisibility_of_element_located((By.CLASS_NAME,'throbber'))
     try:
         driver.get(url)
@@ -52,20 +51,12 @@ def finishLoadGrabSource(url, driver, wait):
         pass;
 
 def getBusinessDetails(s):
-    return [#s.at['biz-name'], 
-           # s.at['biz-address'], 
-           # s.at['biz-phone'],
-           # s.at['biz-rating'], 
-           # s.at['biz-ratingcount'], 
-           # s.at['biz-id'], 
-            s.at['biz_url']
-            ]
+    return [s.at['biz_url']]
 
 def startDriver():
     options = setOptions()
     driver = webdriver.Chrome(chrome_options=options);  
-    #need implicit wait or else some pages timeout
-    #driver.implicitly_wait(10)
+
     wait = WebDriverWait(driver, 30);
     return driver, wait
 
@@ -74,13 +65,9 @@ def quitDriver(driver):
     driver.quit();
 
 def startThread(city):
-    #This block is to save time by using the saved business csv
-    #Instead of rescraping the same stuff
+
     filepath = glob.glob('scraped-data/'+city+'_businesses_v*.csv');
-#    if len(filepath)==0:
-        #path doesnt exist
-#        df = scrapeBusinesses(city)
-    #elif len(filepath==1):
+
     if(len(filepath)==1):
         path = filepath[0]
         df = pd.read_csv(path)
@@ -90,7 +77,7 @@ def startThread(city):
 
     driver, wait = startDriver()
     listOverall=[];
-    #we have a df of businesses scraped, we're going through them one by one
+
     totalPages = df.index.size
     for i in df.index:
         business=i+1
@@ -101,22 +88,18 @@ def startThread(city):
         bizList = getBusinessDetails(df.loc[i])
         
                 
-        #This if statement shuts down and restarts the webdriver 
-        #every 50 pages to prevent slow down over time
+
         if( (i>0) & (i % 20 == 0)):
             quitDriver(driver)
             driver, wait = startDriver()    
                 
         
         
-        #open the page, wait for it to load
-        #then pass the source to BS as lxml (faster than html.parser)    
+  
         soup = finishLoadGrabSource(url, driver, wait)
         
        
-        #location = json.loads(soup.find("div", class_="lightbox-map hidden").attrs['data-map-state'])
-        #biz_lat = location['markers'][1]['location']['latitude']
-        #biz_long = location['markers'][1]['location']['longitude'] 
+ 
         
         for div in soup.find_all("div", class_ = "content-container js-biz-details"):
             try:
@@ -133,10 +116,9 @@ def startThread(city):
                 biz_rating = biz_rating['content']
             except:
                 biz_rating="NA"
-        #initialize list to hold all the info for each business
-        #this list has every review+business-details as each element
+        
         currentBizList = []
-        bizList = [bizList[0], biz_rating,biz_name,biz_phone]#,biz_lat,biz_long]
+        bizList = [bizList[0], biz_rating,biz_name,biz_phone]
        
         for div in soup.find_all("div", class_ = "from-biz-owner-content"):
             try:
@@ -146,20 +128,15 @@ def startThread(city):
         
           
         table= soup.find('table', class_ = 'table table-simple hours-table')        
-        #if (len(table) > 0):
+        
         try:
-        #if (len(table) > 0):
+        
             opn = []
             for row in table.find_all("tr"):
-    #day = row.find("th", scope="row").get_text()
+    
                 cell = row.find("td")
                 hr = cell.get_text()
-    #hr = []
-    #for cell in row.find_all("td"):
-    #    Hour1 = cell.find("span", class_="nowrap").get_text()
-     #   hr.append(Hour1)
-    #d1 = [day, hr[0], hr[1]]
-    #d1 = [day, hr]
+
                 opn.append(hr)
 
             mon = opn[0]
@@ -169,7 +146,7 @@ def startThread(city):
             fri = opn[4]
             sat = opn[5]
             sun = opn[6]
-        #elif(len(table) == 1):
+        
         except:
             mon = "NA"
             tues = "NA"
@@ -183,10 +160,9 @@ def startThread(city):
         
         while(True):
             
-            #Iterate over all review blocks
+            
             for rev in soup.find_all("div", itemprop = "review"):
-             #   review_id = reXGPv['data-review-id']
-             #   user_id = rev['data-signup-object']
+             
                 try:
                     review_name = rev.find("meta", itemprop = "author")
                     review_name = review_name['content']
@@ -205,70 +181,34 @@ def startThread(city):
                 try:
                     review_text = rev.find('p', attrs={'itemprop': 'description'}).get_text()
                 except:
-                    #review text doesn't exits so skipping
+                    
                     review_text="";
                     continue
                 reviewList = [review_name,review_rating,review_date,review_text]
                 currentBizList.append(reviewList+bizList)
 
-#after the for loop above finishes, we want to try to find if there is a
-#"Next Page link that's clicable. If so, keep going
+
             try:
                 soup = getNextPage(driver, wait)
                 time.sleep(3)
             except:
-#this chunk gets called if the try command fails with an error, and can't
-#find a next page link. So we know there are no more reviews.
-#save our lists, +sign means add to the end & not nest the lists with append.
+
                 listOverall=listOverall+currentBizList
                 break   
 
     driver.quit()
     return listOverall
 
-#still to do: seattle,phoenix,austin,riverside,B
-#listCities = ['Morgantown%2C%20WV']#,
-             # 'New+York,+NY',
-             # 'Chicago,+IL',
-             # 'Seattle,+WA',
-             # 'Houston,+TX',
-             # 'Phoenix,+AZ',
-             # 'San+Antonio,+TX',
-             # 'San+Diego,+CA',
-             # 'Austin,+TX',
-             # 'Philadelphia,+PA',
-             # 'Dallas,+TX',
-              #'San+Jose,+CA',]
-
-#columns = ['biz-name','biz-address','biz-phone','biz-rating','biz-ratingcount','biz-id','biz-url']
-#columns = ['biz_url']
-
-#city = 'Morgantown%2C%20WV'
 
 dir_path = 'scraped-data/'
 extension = '.csv'
-#the columns of our final df output we want
 columns = ['review-name','review-rating','review-date','review-text','biz_url',
-           'biz_rating','biz_name','biz_phone',#'biz_lat','biz_long',
+           'biz_rating','biz_name','biz_phone',
            "mon","tues","wed","thurs","fri","sat","sun","biz_desc"]
-#city_name = city
 
-#for city in listCities:
-#listOverall = startThread(city)
-#output = pd.DataFrame.from_records(listOverall, columns=columns)
-    #output2 = [x for x in output['biz_url'] if x.startswith('/biz')]
-    #B = ['hrid=']
-    #blacklist = re.compile('|'.join([re.escape(word) for word in B]))
-    #output3 = [word for word in output2 if not blacklist.search(word)]
-    #output3 = pd.DataFrame(output3)
-    #output3.columns=["biz_url"]
-#now = time.strftime("%Y%m%d-%H%M%S")
-    #output_csv = 'scraped-data/Daycare_businesses_v'+now+'.csv'
-#output_csv = dir_path+city_name+now+extension
-#output.to_csv(output_csv)
 
 cities_csv = pd.read_csv("cities_list.csv", header=None).values.tolist()
-#cities_csv.reverse()
+
 for i, city in enumerate(cities_csv):
     city = city[0]
     listOverall = startThread(city)

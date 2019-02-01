@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../../../favicon.ico">
+
+    <title>Tell Us What You're Looking For</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../static/css/cover.css" rel="stylesheet">
+
+
+    <title>Title</title>
+
+  </head>
+ 	<body>
+
+<div class="main">
+  <div style="text-align:center">
+    <br><br>
+  <img src="static/img/combined.png" style="width: 35%">
+    <div class="starter-template">
+
+
+    </div>
+  <br><br>
+      {% if error %}
+      <div class="p-3 mb-2 bg-danger text-white">{{error}}</div>
+		{% endif %}
+
+<!-- This sends user to recommendations page after filling out the survey   -->
+<form action='/recommendations', method='POST', role = "form">
+
+
+  <div><h2>What is the review that you would write for the vet you want?</h2></div>
+	<div><h5>Tell us the review you would want to write for your perfect vet. <br>What do you expect from the staff or the treatment? <br>Go wild, the more you write the better your matches will be! </h5></div>
+	<div class="text-left form-group">
+	<textarea rows="10", cols = "10" class="form-control" name="statement1" id="statement1",placeholder = "This was an amazing experience. The doctors were so friendly and professional and the staff were patient. I was seen on time..."></textarea></div>
+	<hr class="my-4">
+
+	  <div><h2>Weekend Hour Requirements?</h2></div>
+	<div><h5>Do you need weekend availability? <br> Let us know!<br> Check whichever boxes you prefer or just leave it blank!</h5></div>
+  <div class="input">
+    <!-- There are a number of input types to customize user input -->
+    <input type="checkbox" name="saturday" value="saturday"> <b>Must Have Saturday Hours</b><br>
+    <input type="checkbox" name="sunday" value="sunday"> <b>Must Have Sunday Hours</b><br>
+     </div>
+  <br><br>
+	
+	
+  <br><br><br>
+  <button type="submit">Find Your Vet!</button>
+</form>
+
+
+  </div>
+</div>
+</body>

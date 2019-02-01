@@ -1,0 +1,64 @@
+<style>
+
+ .main {
+ background-color: rgba(255, 255, 255, 0.5);
+ margin-top: 100px;
+ padding-bottom: 50px;
+ }
+ .main h1 {
+ font-size: 3.5em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+ .main h2 {
+ font-size: 2em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+ .main h3 {
+ font-size: 2em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+ .main p {
+ font-size:1em;
+ font-family: Arial;
+ color: #2E3759;
+ }
+
+</style>
+
+
+
+    <title>Title</title>
+
+  </head>
+  <body>
+
+<div class="main">
+  <div style="text-align:center">
+    <br><br>
+  <img src="static/img/IMG_3046.JPG" style="width: 15%">
+    <div class="starter-template">
+
+
+    </div>
+  <br><br>
+
+<!-- This sends user to recommendations page after filling out the survey   -->
+<form action='/recommendations', method='POST'>
+
+
+  <div><h3>What is the review that you would write for the vet you want?</h3></div>
+	<div class="text-left form-group">
+	<textarea rows="10", cols = "70" class="form-control" name="statement1" id="statement1", placeholder = "This was an amazing experience. The doctors were so friendly and professional and the staff were patient. I was seen on time..."></textarea></div>
+	<hr class="my-4">
+
+  <br><br><br>
+  <button type="submit">Get Your Vet!</button>
+</form>
+
+
+  </div>
+</div>
+</body>
